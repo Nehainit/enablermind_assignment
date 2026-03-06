@@ -1,8 +1,11 @@
 # Use official Python image with pre-built wheels
 FROM python:3.10-slim
 
-# Set working directory
+# Set working directory to project root
 WORKDIR /app
+
+# Add project root to Python path
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \

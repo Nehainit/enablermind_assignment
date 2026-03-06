@@ -1,3 +1,6 @@
+langchain
+langchain-core
+langchain-community
 crewai
 openai
 duckduckgo-search
