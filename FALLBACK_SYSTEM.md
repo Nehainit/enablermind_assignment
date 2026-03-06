@@ -13,13 +13,11 @@ When you configure multiple API keys, the system creates an automatic fallback c
 ```
 1. Groq Fast (llama-3.1-8b-instant)     ← PRIMARY (fastest, ~1000 tokens/sec)
    ↓ Rate limit hit
-2. Groq Medium (mixtral-8x7b-32768)     ← FALLBACK 1 (balanced speed/quality)
+2. Groq Large (llama-3.3-70b-versatile) ← FALLBACK 1 (highest quality)
    ↓ Rate limit hit
-3. Groq Large (llama-3.3-70b-versatile) ← FALLBACK 2 (highest quality)
+3. Gemini Flash (gemini-1.5-flash)      ← FALLBACK 2 (free, reliable)
    ↓ Rate limit hit
-4. Gemini Flash (gemini-1.5-flash)      ← FALLBACK 3 (free, reliable)
-   ↓ Rate limit hit
-5. OpenAI (gpt-4o-mini)                 ← FALLBACK 4 (paid, most reliable)
+4. OpenAI (gpt-4o-mini)                 ← FALLBACK 3 (paid, most reliable)
 ```
 
 ### Speed Comparison
@@ -27,7 +25,6 @@ When you configure multiple API keys, the system creates an automatic fallback c
 | Model | Provider | Tokens/Sec | Quality | Free Tier |
 |-------|----------|------------|---------|-----------|
 | llama-3.1-8b-instant | Groq | ~1000 | Good | ✅ 14,400 req/day |
-| mixtral-8x7b-32768 | Groq | ~600 | Very Good | ✅ 14,400 req/day |
 | llama-3.3-70b-versatile | Groq | ~300 | Excellent | ✅ 14,400 req/day |
 | gemini-1.5-flash | Google | ~200 | Very Good | ✅ 15 req/min |
 | gpt-4o-mini | OpenAI | ~100 | Excellent | ❌ Paid only |

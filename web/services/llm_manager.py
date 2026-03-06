@@ -76,40 +76,31 @@ class LLMManager:
                 priority=0,
             )
 
-            # Backup: Medium model for quality
-            self.add_provider(
-                name="groq-medium",
-                model="mixtral-8x7b-32768",  # Good balance
-                api_key=settings.groq_api_key,
-                base_url="https://api.groq.com/openai/v1",
-                priority=1,
-            )
-
             # Backup: Large model for complex queries
             self.add_provider(
                 name="groq-large",
                 model="llama-3.3-70b-versatile",  # Most capable
                 api_key=settings.groq_api_key,
                 base_url="https://api.groq.com/openai/v1",
-                priority=2,
+                priority=1,
             )
 
-        # Priority 3: Gemini (FREE, good quality)
+        # Priority 2: Gemini (FREE, good quality)
         if settings.gemini_api_key:
             self.add_provider(
                 name="gemini-flash",
                 model="gemini-1.5-flash",
                 api_key=settings.gemini_api_key,
-                priority=3,
+                priority=2,
             )
 
-        # Priority 4: OpenAI (Paid, most reliable)
+        # Priority 3: OpenAI (Paid, most reliable)
         if settings.openai_api_key:
             self.add_provider(
                 name="openai",
                 model=settings.openai_model,
                 api_key=settings.openai_api_key,
-                priority=4,
+                priority=3,
             )
 
         # Sort by priority
