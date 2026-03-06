@@ -7,8 +7,6 @@ Exports to markdown and PDF formats.
 
 from crewai import Agent
 
-from src.tools.export_tool import MarkdownExportTool, PDFExportTool
-
 
 def create_report_agent(llm=None) -> Agent:
     """Create and return the report generation agent.
@@ -37,7 +35,6 @@ def create_report_agent(llm=None) -> Agent:
             "executive summaries, and structure reports for maximum clarity. "
             "You take pride in producing publication-ready documents."
         ),
-        "tools": [MarkdownExportTool(), PDFExportTool()],
         "allow_delegation": False,
         "verbose": True,
         "max_iter": 5,
