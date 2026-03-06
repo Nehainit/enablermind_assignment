@@ -89,11 +89,12 @@ async def health_check():
 
 
 # Import and register routes
-from web.routes import main, jobs, downloads
+from web.routes import main, jobs, downloads, feedback
 
 app.include_router(main.router)
 app.include_router(jobs.router)
 app.include_router(downloads.router)
+app.include_router(feedback.router)
 
 
 if __name__ == "__main__":

@@ -99,6 +99,9 @@
     {% endif %}
 </div>
 
+<!-- Feedback Modal -->
+{% include "components/feedback_modal.html" %}
+
 <!-- Script to stop polling when job is complete/failed -->
 <script>
     document.body.addEventListener('htmx:afterSwap', function(event) {
