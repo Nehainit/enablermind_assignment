@@ -37,7 +37,7 @@ async def homepage(request: Request):
 async def submit_research(
     request: Request,
     topic: str = Form(...),
-    max_iterations: int = Form(3)
+    max_iterations: int = Form(1)
 ):
     """Submit a new research job.
 
@@ -63,12 +63,12 @@ async def submit_research(
     # Validate max_iterations
     try:
         max_iterations = int(max_iterations)
-        if max_iterations < 1 or max_iterations > 5:
+        if max_iterations < 1 or max_iterations > 3:
             raise ValueError()
     except (ValueError, TypeError):
         raise HTTPException(
             status_code=400,
-            detail="Max iterations must be between 1 and 5"
+            detail="Max iterations must be between 1 and 3"
         )
 
     # Create job

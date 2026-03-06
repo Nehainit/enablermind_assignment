@@ -75,23 +75,26 @@
             <!-- Max Iterations Slider -->
             <div>
                 <label for="max_iterations" class="block text-sm font-medium text-gray-900 mb-2">
-                    Research Depth: <span id="iterations-value" class="font-semibold">3</span> iterations
+                    Research Depth: <span id="iterations-value" class="font-semibold">1</span> iteration
                 </label>
                 <input
                     type="range"
                     id="max_iterations"
                     name="max_iterations"
                     min="1"
-                    max="5"
-                    value="3"
+                    max="3"
+                    value="1"
                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    oninput="document.getElementById('iterations-value').textContent = this.value"
+                    oninput="document.getElementById('iterations-value').textContent = this.value; document.getElementById('iterations-label').textContent = this.value == 1 ? 'iteration' : 'iterations'"
                 >
                 <div class="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Fast (1-2 min)</span>
-                    <span>Balanced</span>
-                    <span>Thorough (3-5 min)</span>
+                    <span>⚡ Fast (1 min)</span>
+                    <span>Balanced (2 min)</span>
+                    <span>Deep (3 min)</span>
                 </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    <span id="iterations-label">iteration</span> recommended for faster results
+                </p>
             </div>
 
             <!-- Submit Button -->

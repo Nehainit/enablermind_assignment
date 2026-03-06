@@ -17,5 +17,5 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: MAX_RESEARCH_ITERATIONS
-        value: "3"
+        value: "1"
     healthCheckPath: /health

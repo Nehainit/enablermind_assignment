@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Agent workflow configuration
     max_research_iterations: int = Field(
-        default=3,
+        default=1,
         description="Maximum feedback loop iterations between analysis and research",
     )
     max_search_results: int = Field(
