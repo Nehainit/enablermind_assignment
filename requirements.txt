@@ -1,3 +1,4 @@
+tiktoken==0.5.2
 crewai
 openai
 duckduckgo-search
