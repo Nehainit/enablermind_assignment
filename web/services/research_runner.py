@@ -263,38 +263,161 @@ def run_research_with_fallback(job_id: str, topic: str, max_iterations: int) -> 
                 f.write(result_str)
             logger.info(f"Saved fallback markdown to: {md_path}")
 
-            # Try to save HTML (as PDF alternative)
+            # Try to save HTML and PDF
             try:
                 import markdown
+                from datetime import datetime
+
                 html_content = markdown.markdown(
                     result_str,
                     extensions=["extra", "tables", "fenced_code"]
                 )
-                html_path = outputs_dir / f"{filename}.html"
 
+                current_time = datetime.now().strftime("%B %d, %Y")
                 styled_html = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Research Report</title>
     <style>
-        body {{ font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; line-height: 1.6; }}
-        h1 {{ color: #1a1a1a; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }}
-        h2 {{ color: #2563eb; margin-top: 30px; }}
-        code {{ background: #f3f4f6; padding: 2px 6px; border-radius: 3px; }}
-        pre {{ background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto; }}
+        @page {{
+            size: A4;
+            margin: 2.5cm 2cm;
+        }}
+        body {{
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }}
+        .header {{
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+        }}
+        .header h1 {{
+            color: #1a1a1a;
+            font-size: 28pt;
+            margin: 0 0 10px 0;
+        }}
+        .header p {{
+            color: #666;
+            font-size: 10pt;
+            margin: 0;
+        }}
+        h1 {{
+            color: #1a1a1a;
+            font-size: 20pt;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }}
+        h2 {{
+            color: #2563eb;
+            font-size: 16pt;
+            margin-top: 25px;
+        }}
+        h3 {{
+            color: #1e40af;
+            font-size: 13pt;
+            margin-top: 20px;
+        }}
+        p {{ margin-bottom: 10pt; text-align: justify; }}
+        code {{
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            color: #dc2626;
+        }}
+        pre {{
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border-left: 4px solid #3b82f6;
+        }}
+        pre code {{
+            background: transparent;
+            color: #e2e8f0;
+            padding: 0;
+        }}
+        ul, ol {{
+            margin-bottom: 12pt;
+            padding-left: 25pt;
+        }}
+        li {{
+            margin-bottom: 6pt;
+            line-height: 1.5;
+        }}
+        strong {{
+            color: #1a1a1a;
+            font-weight: bold;
+        }}
+        a {{
+            color: #2563eb;
+            text-decoration: none;
+            word-break: break-all;
+        }}
+        blockquote {{
+            border-left: 4px solid #d1d5db;
+            padding-left: 16px;
+            margin-left: 0;
+            color: #6b7280;
+            font-style: italic;
+        }}
+        table {{
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }}
+        th, td {{
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            text-align: left;
+        }}
+        th {{
+            background-color: #f3f4f6;
+            font-weight: bold;
+        }}
+        tr:nth-child(even) {{
+            background-color: #f9fafb;
+        }}
     </style>
 </head>
 <body>
-{html_content}
+    <div class="header">
+        <h1>Research Report</h1>
+        <p>Generated on {current_time}</p>
+    </div>
+    {html_content}
 </body>
 </html>"""
 
+                # Save HTML
+                html_path = outputs_dir / f"{filename}.html"
                 with open(html_path, "w") as f:
                     f.write(styled_html)
                 logger.info(f"Saved fallback HTML to: {html_path}")
+
+                # Try to generate PDF using WeasyPrint
+                try:
+                    from weasyprint import HTML
+                    pdf_path = outputs_dir / f"{filename}.pdf"
+                    HTML(string=styled_html).write_pdf(pdf_path)
+                    logger.info(f"Saved fallback PDF to: {pdf_path}")
+                except (ImportError, OSError) as pdf_error:
+                    logger.warning(f"Could not generate PDF (WeasyPrint unavailable): {pdf_error}")
+                    logger.info("HTML file can be opened in browser and printed to PDF")
+
             except Exception as e:
-                logger.warning(f"Could not generate HTML: {e}")
+                logger.warning(f"Could not generate HTML/PDF: {e}")
 
             return result_str
 
