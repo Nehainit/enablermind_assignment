@@ -1,0 +1,107 @@
+<!-- Progress Bar Component -->
+{% if job.status.value == 'pending' %}
+<div class="bg-white shadow-md rounded-lg p-8 mb-6">
+    <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ job.stage }}</h3>
+        <p class="text-sm text-gray-500">Your research will begin shortly...</p>
+    </div>
+    <div data-status="{{ job.status.value }}"></div>
+</div>
+
+{% elif job.status.value == 'running' %}
+<div class="bg-white shadow-md rounded-lg p-8 mb-6">
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700">{{ job.stage }}</span>
+            <span class="text-sm font-medium text-blue-600">{{ job.progress }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div
+                class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out progress-bar-animated"
+                style="width: {{ job.progress }}%"
+            ></div>
+        </div>
+    </div>
+
+    <!-- Research Stages Indicator -->
+    <div class="grid grid-cols-3 gap-4 text-center text-sm">
+        <div class="{% if job.progress >= 15 %}text-blue-600{% else %}text-gray-400{% endif %}">
+            <div class="mb-1">
+                <svg class="w-6 h-6 mx-auto" fill="{% if job.progress >= 15 %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <span class="font-medium">Researching</span>
+        </div>
+        <div class="{% if job.progress >= 50 %}text-blue-600{% else %}text-gray-400{% endif %}">
+            <div class="mb-1">
+                <svg class="w-6 h-6 mx-auto" fill="{% if job.progress >= 50 %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+            </div>
+            <span class="font-medium">Analyzing</span>
+        </div>
+        <div class="{% if job.progress >= 80 %}text-blue-600{% else %}text-gray-400{% endif %}">
+            <div class="mb-1">
+                <svg class="w-6 h-6 mx-auto" fill="{% if job.progress >= 80 %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <span class="font-medium">Reporting</span>
+        </div>
+    </div>
+
+    <!-- Time Estimate -->
+    <div class="mt-6 text-center">
+        <p class="text-sm text-gray-500">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Estimated time: 2-5 minutes depending on research depth
+        </p>
+    </div>
+
+    <div data-status="{{ job.status.value }}"></div>
+</div>
+
+{% elif job.status.value == 'completed' %}
+<div class="bg-green-50 border-l-4 border-green-400 p-6 mb-6">
+    <div class="flex items-center">
+        <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-lg font-medium text-green-800">Research Complete!</h3>
+            <p class="mt-1 text-sm text-green-700">
+                Your comprehensive research report has been generated successfully.
+            </p>
+        </div>
+    </div>
+    <div data-status="{{ job.status.value }}"></div>
+</div>
+
+{% elif job.status.value == 'failed' %}
+<div class="bg-red-50 border-l-4 border-red-400 p-6 mb-6">
+    <div class="flex items-center">
+        <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-lg font-medium text-red-800">Research Failed</h3>
+            <p class="mt-1 text-sm text-red-700">
+                {{ job.error if job.error else "An error occurred during research." }}
+            </p>
+        </div>
+    </div>
+    <div data-status="{{ job.status.value }}"></div>
+</div>
+{% endif %}

@@ -1,0 +1,15 @@
+# Web-specific dependencies for EnableMind Web UI
+
+# FastAPI and server (using compatible versions)
+fastapi>=0.109.0
+uvicorn[standard]>=0.31.1
+
+# Templating and forms
+jinja2>=3.1.4
+python-multipart>=0.0.9
+
+# Async file handling
+aiofiles>=23.2.1
+
+# CORS support (already in fastapi, but explicit)
+# python-dotenv is in main requirements.txt

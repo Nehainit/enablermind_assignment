@@ -1,0 +1,199 @@
+"""Research runner service - wraps the core EnableMind research system."""
+
+import logging
+import os
+import re
+import glob
+import sys
+import threading
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Optional
+
+# Add project root and src directory to path for imports
+project_root = Path(__file__).parent.parent.parent
+src_dir = project_root / "src"
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(src_dir))
+
+from src.main import run
+from web.services.job_manager import job_manager
+
+logger = logging.getLogger(__name__)
+
+
+def sanitize_topic(topic: str) -> str:
+    """Sanitize topic for filename matching.
+
+    Args:
+        topic: Raw research topic
+
+    Returns:
+        Sanitized topic string matching report_task.py logic
+    """
+    safe_topic = re.sub(r'[^\w\s-]', '', topic.lower())
+    safe_topic = re.sub(r'[-\s]+', '_', safe_topic)
+    return safe_topic
+
+
+def discover_output_files(topic: str, max_age_minutes: int = 10) -> Dict[str, str]:
+    """Discover generated report files for a topic.
+
+    Args:
+        topic: Research topic
+        max_age_minutes: Only consider files created in last N minutes
+
+    Returns:
+        Dictionary mapping format to absolute filepath
+    """
+    safe_topic = sanitize_topic(topic)
+    output_dir = Path("./outputs")
+
+    if not output_dir.exists():
+        logger.warning("Outputs directory does not exist")
+        return {}
+
+    # Find files matching pattern: {safe_topic}_{timestamp}.*
+    pattern = f"{safe_topic}_*"
+    files = {}
+
+    # Check for markdown
+    md_files = list(output_dir.glob(f"{pattern}.md"))
+    if md_files:
+        # Get most recent file
+        md_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        files["markdown"] = str(md_files[0].absolute())
+
+    # Check for PDF
+    pdf_files = list(output_dir.glob(f"{pattern}.pdf"))
+    if pdf_files:
+        pdf_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        files["pdf"] = str(pdf_files[0].absolute())
+
+    # Check for HTML (fallback if PDF generation failed)
+    html_files = list(output_dir.glob(f"{pattern}.html"))
+    if html_files:
+        html_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        files["html"] = str(html_files[0].absolute())
+
+    # Filter by age
+    cutoff_time = time.time() - (max_age_minutes * 60)
+    files = {
+        fmt: path for fmt, path in files.items()
+        if Path(path).stat().st_mtime >= cutoff_time
+    }
+
+    logger.info(f"Discovered {len(files)} output files for topic: {topic}")
+    return files
+
+
+def estimate_progress(elapsed_seconds: float, total_estimate: float = 180) -> int:
+    """Estimate progress based on elapsed time.
+
+    Args:
+        elapsed_seconds: Seconds since job started
+        total_estimate: Estimated total duration in seconds (default 3 minutes)
+
+    Returns:
+        Progress percentage (0-90, capped to avoid showing 100% before completion)
+    """
+    # Use sigmoid curve for natural progress feel
+    # Progress accelerates early then slows
+    progress = int((elapsed_seconds / total_estimate) * 100)
+    return min(90, progress)  # Cap at 90% until actually complete
+
+
+def update_progress_periodically(job_id: str, start_time: float, stop_event: threading.Event):
+    """Background thread to update job progress periodically.
+
+    Args:
+        job_id: Job identifier
+        start_time: Job start timestamp
+        stop_event: Event to signal when to stop
+    """
+    stages = [
+        (0, "Initializing research agents"),
+        (15, "Gathering information from web sources"),
+        (35, "Analyzing gathered data"),
+        (60, "Synthesizing findings"),
+        (75, "Generating comprehensive report"),
+        (85, "Finalizing report and citations"),
+    ]
+
+    stage_idx = 0
+
+    while not stop_event.is_set():
+        elapsed = time.time() - start_time
+        progress = estimate_progress(elapsed)
+
+        # Update stage based on progress
+        for idx, (threshold, stage_text) in enumerate(stages):
+            if progress >= threshold:
+                stage_idx = idx
+
+        current_stage = stages[stage_idx][1]
+        job_manager.update_progress(job_id, progress, current_stage)
+
+        # Wait 2 seconds before next update
+        stop_event.wait(2)
+
+
+def run_research_job(job_id: str, topic: str, max_iterations: int):
+    """Run a research job and update its progress.
+
+    This is called by the JobManager worker thread.
+
+    Args:
+        job_id: Job identifier
+        topic: Research topic
+        max_iterations: Maximum research iterations
+    """
+    logger.info(f"Starting research job {job_id}: {topic}")
+    start_time = time.time()
+
+    # Start background thread for progress updates
+    stop_event = threading.Event()
+    progress_thread = threading.Thread(
+        target=update_progress_periodically,
+        args=(job_id, start_time, stop_event),
+        daemon=True
+    )
+    progress_thread.start()
+
+    try:
+        # Initial progress
+        job_manager.update_progress(job_id, 5, "Starting research crew")
+
+        # Run the actual research (this calls existing src/main.py::run)
+        result = run(topic=topic, max_iterations=max_iterations)
+
+        # Stop progress updates
+        stop_event.set()
+        progress_thread.join(timeout=2)
+
+        # Discover output files
+        job_manager.update_progress(job_id, 95, "Discovering generated reports")
+        files = discover_output_files(topic)
+
+        if not files:
+            logger.warning(f"No output files found for job {job_id}")
+            # Check if outputs directory exists
+            if not Path("./outputs").exists():
+                raise Exception("Outputs directory not found. Report generation may have failed.")
+            raise Exception("Report files not found. Generation may have failed.")
+
+        # Mark job as complete
+        job_manager.complete_job(job_id, files)
+
+        elapsed = time.time() - start_time
+        logger.info(f"Research job {job_id} completed in {elapsed:.1f}s")
+
+    except Exception as e:
+        # Stop progress updates
+        stop_event.set()
+        progress_thread.join(timeout=2)
+
+        logger.exception(f"Research job {job_id} failed")
+        job_manager.fail_job(job_id, str(e))
+        raise

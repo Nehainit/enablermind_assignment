@@ -1,0 +1,14 @@
+crewai
+openai
+duckduckgo-search
+requests
+beautifulsoup4
+lxml
+markdown
+weasyprint
+python-dotenv
+pydantic
+pydantic-settings
+structlog
+pytest
+pytest-mock
