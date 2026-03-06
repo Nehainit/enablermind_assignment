@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: enablemind-research
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_RESEARCH_ITERATIONS
+        value: "3"
+    healthCheckPath: /health
