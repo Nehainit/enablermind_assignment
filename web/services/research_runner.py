@@ -246,7 +246,57 @@ def run_research_with_fallback(job_id: str, topic: str, max_iterations: int) -> 
             # Run the crew
             result = crew.kickoff()
             logger.info(f"Research completed successfully with {provider_info['current']['name']}")
-            return str(result)
+
+            # Save the result as a fallback in case the agent didn't use export tools
+            result_str = str(result)
+            safe_topic = sanitize_topic(topic)
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"{safe_topic}_{timestamp}"
+
+            # Ensure outputs directory exists
+            outputs_dir = Path("./outputs")
+            outputs_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save markdown
+            md_path = outputs_dir / f"{filename}.md"
+            with open(md_path, "w") as f:
+                f.write(result_str)
+            logger.info(f"Saved fallback markdown to: {md_path}")
+
+            # Try to save HTML (as PDF alternative)
+            try:
+                import markdown
+                html_content = markdown.markdown(
+                    result_str,
+                    extensions=["extra", "tables", "fenced_code"]
+                )
+                html_path = outputs_dir / f"{filename}.html"
+
+                styled_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Research Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; line-height: 1.6; }}
+        h1 {{ color: #1a1a1a; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }}
+        h2 {{ color: #2563eb; margin-top: 30px; }}
+        code {{ background: #f3f4f6; padding: 2px 6px; border-radius: 3px; }}
+        pre {{ background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto; }}
+    </style>
+</head>
+<body>
+{html_content}
+</body>
+</html>"""
+
+                with open(html_path, "w") as f:
+                    f.write(styled_html)
+                logger.info(f"Saved fallback HTML to: {html_path}")
+            except Exception as e:
+                logger.warning(f"Could not generate HTML: {e}")
+
+            return result_str
 
         except Exception as e:
             last_error = e
