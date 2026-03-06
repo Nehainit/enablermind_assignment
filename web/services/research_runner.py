@@ -17,8 +17,10 @@ src_dir = project_root / "src"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(src_dir))
 
-from src.main import run
+from src.main import create_research_crew
 from web.services.job_manager import job_manager
+from web.services.llm_manager import get_llm_manager, initialize_llm_manager
+from config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +141,135 @@ def update_progress_periodically(job_id: str, start_time: float, stop_event: thr
         stop_event.wait(2)
 
 
+def is_rate_limit_error(error: Exception) -> bool:
+    """Check if an error is due to rate limiting.
+
+    Args:
+        error: Exception to check
+
+    Returns:
+        True if it's a rate limit error
+    """
+    error_str = str(error).lower()
+    rate_limit_indicators = [
+        "rate limit",
+        "rate_limit",
+        "429",
+        "quota exceeded",
+        "too many requests",
+        "resource exhausted",
+    ]
+    return any(indicator in error_str for indicator in rate_limit_indicators)
+
+
+def run_research_with_fallback(job_id: str, topic: str, max_iterations: int) -> str:
+    """Run research with automatic fallback on rate limits.
+
+    Args:
+        job_id: Job identifier
+        topic: Research topic
+        max_iterations: Maximum research iterations
+
+    Returns:
+        Research result string
+
+    Raises:
+        Exception: If all providers fail
+    """
+    settings = get_settings()
+    llm_manager = get_llm_manager()
+
+    # Initialize LLM manager if not already done
+    if not llm_manager.providers:
+        initialize_llm_manager(settings)
+
+    # Reset to primary provider at start of new job
+    llm_manager.reset_to_primary()
+
+    max_retries = len(llm_manager.providers)
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            # Get current LLM from manager
+            current_llm = llm_manager.get_current_llm()
+            provider_info = llm_manager.get_provider_info()
+
+            job_manager.update_progress(
+                job_id,
+                10 + (attempt * 5),
+                f"Starting research with {provider_info['current']['name']}"
+            )
+
+            logger.info(
+                f"Attempt {attempt + 1}/{max_retries} with provider: {provider_info['current']['name']}"
+            )
+
+            # Create crew with current LLM
+            from agents.research_agent import create_research_agent
+            from agents.analysis_agent import create_analysis_agent
+            from agents.report_agent import create_report_agent
+            from tasks.research_task import create_research_task
+            from tasks.analysis_task import create_analysis_task
+            from tasks.report_task import create_report_task
+            from crewai import Crew, Process
+
+            # Create agents with the configured LLM
+            research_agent = create_research_agent(llm=current_llm)
+            analysis_agent = create_analysis_agent(llm=current_llm)
+            report_agent = create_report_agent(llm=current_llm)
+
+            # Create tasks
+            research_task = create_research_task(agent=research_agent, topic=topic)
+            analysis_task = create_analysis_task(
+                agent=analysis_agent,
+                research_task=research_task,
+                max_iterations=max_iterations,
+            )
+            report_task = create_report_task(
+                agent=report_agent,
+                research_task=research_task,
+                analysis_task=analysis_task,
+                topic=topic,
+            )
+
+            # Assemble the crew
+            crew = Crew(
+                agents=[research_agent, analysis_agent, report_agent],
+                tasks=[research_task, analysis_task, report_task],
+                process=Process.sequential,
+                memory=True,
+                verbose=True,
+            )
+
+            # Run the crew
+            result = crew.kickoff()
+            logger.info(f"Research completed successfully with {provider_info['current']['name']}")
+            return str(result)
+
+        except Exception as e:
+            last_error = e
+            logger.error(f"Research attempt {attempt + 1} failed: {str(e)}")
+
+            # Check if it's a rate limit error and we have fallback providers
+            if is_rate_limit_error(e) and llm_manager.fallback_to_next_provider():
+                logger.warning(f"Rate limit hit, falling back to next provider...")
+                job_manager.update_progress(
+                    job_id,
+                    15 + (attempt * 5),
+                    "Rate limit reached, switching to backup provider..."
+                )
+                continue
+            else:
+                # Not a rate limit error or no more fallbacks
+                raise
+
+    # All providers exhausted
+    raise Exception(
+        f"All {max_retries} LLM providers failed. Last error: {str(last_error)}"
+    )
+
+
 def run_research_job(job_id: str, topic: str, max_iterations: int):
     """Run a research job and update its progress.
 
@@ -165,8 +296,12 @@ def run_research_job(job_id: str, topic: str, max_iterations: int):
         # Initial progress
         job_manager.update_progress(job_id, 5, "Starting research crew")
 
-        # Run the actual research (this calls existing src/main.py::run)
-        result = run(topic=topic, max_iterations=max_iterations)
+        # Run research with automatic fallback
+        result = run_research_with_fallback(
+            job_id=job_id,
+            topic=topic,
+            max_iterations=max_iterations
+        )
 
         # Stop progress updates
         stop_event.set()

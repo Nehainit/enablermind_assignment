@@ -9,9 +9,11 @@ services:
       - key: LLM_PROVIDER
         value: groq
       - key: GROQ_API_KEY
-        sync: false  # User must set this in Render dashboard
+        sync: false  # User must set this in Render dashboard (PRIMARY - REQUIRED)
+      - key: GEMINI_API_KEY
+        sync: false  # Optional: Add Gemini as backup for rate limit fallback
       - key: GROQ_MODEL
-        value: llama-3.3-70b-versatile
+        value: llama-3.1-8b-instant  # FASTEST model, 3x faster than 70b
       - key: LOG_LEVEL
         value: INFO
       - key: MAX_RESEARCH_ITERATIONS

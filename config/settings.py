@@ -16,9 +16,9 @@ class Settings(BaseSettings):
     # LLM Provider selection
     llm_provider: str = Field(default="gemini", description="LLM provider: 'openai', 'groq', or 'gemini'")
 
-    # Model configuration
+    # Model configuration (Primary models - LLM manager handles fallbacks)
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model to use")
-    groq_model: str = Field(default="llama-3.3-70b-versatile", description="Groq model to use (FREE)")
+    groq_model: str = Field(default="llama-3.1-8b-instant", description="Groq model to use (FREE, FASTEST)")
     gemini_model: str = Field(default="gemini-1.5-flash", description="Gemini model to use (FREE)")
 
     # Logging
