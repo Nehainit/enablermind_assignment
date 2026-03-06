@@ -8,10 +8,11 @@ from typing import Optional
 class Settings(BaseSettings):
     """Central configuration for the enablemind research system."""
 
-    # API Keys - support OpenAI, Groq, and Gemini
+    # API Keys - support OpenAI, Groq, Gemini, and Kimi
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
     groq_api_key: Optional[str] = Field(default=None, description="Groq API key (FREE)")
     gemini_api_key: Optional[str] = Field(default=None, description="Google Gemini API key (FREE)")
+    kimi_api_key: Optional[str] = Field(default=None, description="Kimi/Moonshot API key")
 
     # LLM Provider selection
     llm_provider: str = Field(default="gemini", description="LLM provider: 'openai', 'groq', or 'gemini'")
@@ -20,6 +21,7 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model to use")
     groq_model: str = Field(default="llama-3.1-8b-instant", description="Groq model to use (FREE, FASTEST)")
     gemini_model: str = Field(default="gemini-1.5-flash", description="Gemini model to use (FREE)")
+    kimi_model: str = Field(default="moonshot-v1-8k", description="Kimi/Moonshot model (8k/32k/128k context)")
 
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")

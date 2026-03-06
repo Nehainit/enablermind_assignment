@@ -143,24 +143,38 @@ def update_progress_periodically(job_id: str, start_time: float, stop_event: thr
 
 
 def is_rate_limit_error(error: Exception) -> bool:
-    """Check if an error is due to rate limiting.
+    """Check if an error is due to rate limiting or model availability.
 
     Args:
         error: Exception to check
 
     Returns:
-        True if it's a rate limit error
+        True if it's a rate limit error or should trigger fallback
     """
     error_str = str(error).lower()
+
+    # Rate limit indicators
     rate_limit_indicators = [
         "rate limit",
         "rate_limit",
+        "ratelimit",
         "429",
         "quota exceeded",
         "too many requests",
         "resource exhausted",
+        "capacity",
+        "overloaded",
+        "model_decommissioned",
+        "invalid_model",
+        "model not found",
     ]
-    return any(indicator in error_str for indicator in rate_limit_indicators)
+
+    is_rate_limit = any(indicator in error_str for indicator in rate_limit_indicators)
+
+    if is_rate_limit:
+        logger.warning(f"Rate limit or model error detected: {error_str[:200]}")
+
+    return is_rate_limit
 
 
 def run_research_with_fallback(job_id: str, topic: str, max_iterations: int) -> str:
@@ -423,19 +437,35 @@ def run_research_with_fallback(job_id: str, topic: str, max_iterations: int) -> 
 
         except Exception as e:
             last_error = e
-            logger.error(f"Research attempt {attempt + 1} failed: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Research attempt {attempt + 1}/{max_retries} failed: {error_msg}")
 
-            # Check if it's a rate limit error and we have fallback providers
-            if is_rate_limit_error(e) and llm_manager.fallback_to_next_provider():
-                logger.warning(f"Rate limit hit, falling back to next provider...")
-                job_manager.update_progress(
-                    job_id,
-                    15 + (attempt * 5),
-                    "Rate limit reached, switching to backup provider..."
-                )
-                continue
+            # Check if it's a rate limit error
+            is_rate_limited = is_rate_limit_error(e)
+            has_fallback = llm_manager.current_provider_index < len(llm_manager.providers) - 1
+
+            logger.info(f"is_rate_limited={is_rate_limited}, has_fallback={has_fallback}")
+
+            if is_rate_limited and has_fallback:
+                # Try to fallback to next provider
+                if llm_manager.fallback_to_next_provider():
+                    next_provider = llm_manager.get_provider_info()['current']
+                    logger.warning(f"Falling back to: {next_provider['name']} ({next_provider['model']})")
+                    job_manager.update_progress(
+                        job_id,
+                        15 + (attempt * 5),
+                        f"Switching to {next_provider['name']}..."
+                    )
+                    continue
+                else:
+                    logger.error("Fallback failed - no more providers")
+                    raise
             else:
                 # Not a rate limit error or no more fallbacks
+                if not is_rate_limited:
+                    logger.error(f"Non-rate-limit error, not falling back: {error_msg[:200]}")
+                else:
+                    logger.error("Rate limited but no fallback providers available")
                 raise
 
     # All providers exhausted

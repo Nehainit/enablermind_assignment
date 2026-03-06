@@ -15,19 +15,22 @@ When you configure multiple API keys, the system creates an automatic fallback c
    ↓ Rate limit hit
 2. Groq Large (llama-3.3-70b-versatile) ← FALLBACK 1 (highest quality)
    ↓ Rate limit hit
-3. Gemini Flash (gemini-1.5-flash)      ← FALLBACK 2 (free, reliable)
+3. Kimi (moonshot-v1-8k)                ← FALLBACK 2 (8k-128k context, great for complex research)
    ↓ Rate limit hit
-4. OpenAI (gpt-4o-mini)                 ← FALLBACK 3 (paid, most reliable)
+4. Gemini Flash (gemini-1.5-flash)      ← FALLBACK 3 (free, reliable)
+   ↓ Rate limit hit
+5. OpenAI (gpt-4o-mini)                 ← FALLBACK 4 (paid, most reliable)
 ```
 
 ### Speed Comparison
 
-| Model | Provider | Tokens/Sec | Quality | Free Tier |
-|-------|----------|------------|---------|-----------|
-| llama-3.1-8b-instant | Groq | ~1000 | Good | ✅ 14,400 req/day |
-| llama-3.3-70b-versatile | Groq | ~300 | Excellent | ✅ 14,400 req/day |
-| gemini-1.5-flash | Google | ~200 | Very Good | ✅ 15 req/min |
-| gpt-4o-mini | OpenAI | ~100 | Excellent | ❌ Paid only |
+| Model | Provider | Tokens/Sec | Quality | Context | Free Tier |
+|-------|----------|------------|---------|---------|-----------|
+| llama-3.1-8b-instant | Groq | ~1000 | Good | 128k | ✅ 14,400 req/day |
+| llama-3.3-70b-versatile | Groq | ~300 | Excellent | 128k | ✅ 14,400 req/day |
+| moonshot-v1-8k | Kimi/Moonshot | ~400 | Very Good | 8k-128k | 💰 Paid |
+| gemini-1.5-flash | Google | ~200 | Very Good | 1M | ✅ 15 req/min |
+| gpt-4o-mini | OpenAI | ~100 | Excellent | 128k | ❌ Paid only |
 
 ### Rate Limit Detection
 

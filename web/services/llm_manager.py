@@ -64,44 +64,60 @@ class LLMManager:
         logger.info("added_llm_provider", name=name, model=model, priority=priority)
 
     def setup_providers_from_settings(self, settings):
-        """Setup providers from application settings with fallback order."""
-        # Priority 0: Groq Fast Models (FREE, fastest)
-        if settings.groq_api_key:
-            # Primary: Fast 8B model for speed
-            self.add_provider(
-                name="groq-fast",
-                model="llama-3.1-8b-instant",  # FASTEST - 1000 tokens/sec
-                api_key=settings.groq_api_key,
-                base_url="https://api.groq.com/openai/v1",
-                priority=0,
-            )
+        """Setup providers from application settings with fallback order.
 
-            # Backup: Large model for complex queries
-            self.add_provider(
-                name="groq-large",
-                model="llama-3.3-70b-versatile",  # Most capable
-                api_key=settings.groq_api_key,
-                base_url="https://api.groq.com/openai/v1",
-                priority=1,
-            )
+        Using ONLY Groq models for all fallbacks.
+        """
+        if not settings.groq_api_key:
+            raise ValueError("GROQ_API_KEY is required. Get one free at https://console.groq.com/")
 
-        # Priority 2: Gemini (FREE, good quality)
-        if settings.gemini_api_key:
-            self.add_provider(
-                name="gemini-flash",
-                model="gemini-1.5-flash",
-                api_key=settings.gemini_api_key,
-                priority=2,
-            )
+        # All providers use the same Groq API key but different models
+        groq_base = "https://api.groq.com/openai/v1"
 
-        # Priority 3: OpenAI (Paid, most reliable)
-        if settings.openai_api_key:
-            self.add_provider(
-                name="openai",
-                model=settings.openai_model,
-                api_key=settings.openai_api_key,
-                priority=3,
-            )
+        # Priority 0: Kimi (if available on Groq)
+        self.add_provider(
+            name="groq-kimi",
+            model="kimi",
+            api_key=settings.groq_api_key,
+            base_url=groq_base,
+            priority=0,
+        )
+
+        # Priority 1: Fastest model
+        self.add_provider(
+            name="groq-8b-instant",
+            model="llama-3.1-8b-instant",
+            api_key=settings.groq_api_key,
+            base_url=groq_base,
+            priority=1,
+        )
+
+        # Priority 2: Alternative fast model
+        self.add_provider(
+            name="groq-70b-specdec",
+            model="llama-3.1-70b-specdec",
+            api_key=settings.groq_api_key,
+            base_url=groq_base,
+            priority=2,
+        )
+
+        # Priority 3: Versatile large model
+        self.add_provider(
+            name="groq-70b-versatile",
+            model="llama-3.1-70b-versatile",
+            api_key=settings.groq_api_key,
+            base_url=groq_base,
+            priority=3,
+        )
+
+        # Priority 4: Latest large model
+        self.add_provider(
+            name="groq-3.3-70b",
+            model="llama-3.3-70b-versatile",
+            api_key=settings.groq_api_key,
+            base_url=groq_base,
+            priority=4,
+        )
 
         # Sort by priority
         self.providers.sort(key=lambda p: p.priority)

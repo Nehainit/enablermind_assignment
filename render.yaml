@@ -10,10 +10,14 @@ services:
         value: groq
       - key: GROQ_API_KEY
         sync: false  # User must set this in Render dashboard (PRIMARY - REQUIRED)
+      - key: KIMI_API_KEY
+        sync: false  # Optional: Add Kimi/Moonshot as backup (large context)
       - key: GEMINI_API_KEY
         sync: false  # Optional: Add Gemini as backup for rate limit fallback
       - key: GROQ_MODEL
-        value: llama-3.1-8b-instant  # FASTEST model, 3x faster than 70b
+        value: llama-3.1-8b-instant  # FASTEST model
+      - key: KIMI_MODEL
+        value: moonshot-v1-8k  # Kimi model with 8k context
       - key: LOG_LEVEL
         value: INFO
       - key: MAX_RESEARCH_ITERATIONS
