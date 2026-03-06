@@ -52,9 +52,10 @@ def discover_output_files(topic: str, max_age_minutes: int = 10) -> Dict[str, st
     safe_topic = sanitize_topic(topic)
     output_dir = Path("./outputs")
 
+    # Create outputs directory if it doesn't exist
     if not output_dir.exists():
-        logger.warning("Outputs directory does not exist")
-        return {}
+        logger.info("Creating outputs directory")
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     # Find files matching pattern: {safe_topic}_{timestamp}.*
     pattern = f"{safe_topic}_*"
@@ -309,14 +310,18 @@ def run_research_job(job_id: str, topic: str, max_iterations: int):
 
         # Discover output files
         job_manager.update_progress(job_id, 95, "Discovering generated reports")
+
+        # Ensure outputs directory exists before checking
+        outputs_dir = Path("./outputs")
+        outputs_dir.mkdir(parents=True, exist_ok=True)
+
         files = discover_output_files(topic)
 
         if not files:
             logger.warning(f"No output files found for job {job_id}")
-            # Check if outputs directory exists
-            if not Path("./outputs").exists():
-                raise Exception("Outputs directory not found. Report generation may have failed.")
-            raise Exception("Report files not found. Generation may have failed.")
+            logger.warning(f"Checked directory: {outputs_dir.absolute()}")
+            logger.warning(f"Directory contents: {list(outputs_dir.glob('*'))}")
+            raise Exception(f"Report files not found after research. The research may have completed but file generation failed. Please try again.")
 
         # Mark job as complete
         job_manager.complete_job(job_id, files)

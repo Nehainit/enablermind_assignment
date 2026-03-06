@@ -26,6 +26,12 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown."""
     # Startup
     logger.info("Starting EnableMind Web Application")
+
+    # Ensure outputs directory exists
+    outputs_dir = Path(__file__).parent.parent / "outputs"
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Outputs directory ready at: {outputs_dir}")
+
     job_manager.start(job_handler=run_research_job)
     logger.info("JobManager worker started")
 
