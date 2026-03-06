@@ -72,34 +72,25 @@ class LLMManager:
             raise ValueError("GROQ_API_KEY is required. Get one free at https://console.groq.com/")
 
         # All providers use the same Groq API key
-        # Using ONLY TESTED & VERIFIED Groq models (tested 2026-03-07)
+        # Using ONLY CrewAI-compatible Groq models (tested 2026-03-07)
         groq_base = "https://api.groq.com/openai/v1"
 
-        # Priority 0: Kimi K2 (Moonshot AI's 1T MoE, 256k context) ✅ TESTED
-        self.add_provider(
-            name="groq-kimi-k2",
-            model="moonshotai/kimi-k2-instruct",
-            api_key=settings.groq_api_key,
-            base_url=groq_base,
-            priority=0,
-        )
-
-        # Priority 1: Llama 3.1 8B Instant (fastest, ~1000 tokens/sec) ✅ TESTED
+        # Priority 0: Llama 3.1 8B Instant (fastest, ~1000 tokens/sec) ✅ CREWAI COMPATIBLE
         self.add_provider(
             name="groq-8b-instant",
             model="llama-3.1-8b-instant",
             api_key=settings.groq_api_key,
             base_url=groq_base,
-            priority=1,
+            priority=0,
         )
 
-        # Priority 2: Llama 3.3 70B (latest large model, 128k context) ✅ TESTED
+        # Priority 1: Llama 3.3 70B (latest large, 128k context) ✅ CREWAI COMPATIBLE
         self.add_provider(
             name="groq-3.3-70b",
             model="llama-3.3-70b-versatile",
             api_key=settings.groq_api_key,
             base_url=groq_base,
-            priority=2,
+            priority=1,
         )
 
         # Sort by priority
