@@ -71,19 +71,20 @@ class LLMManager:
         if not settings.groq_api_key:
             raise ValueError("GROQ_API_KEY is required. Get one free at https://console.groq.com/")
 
-        # All providers use the same Groq API key but different models
+        # All providers use the same Groq API key
+        # Using ONLY TESTED & VERIFIED Groq models (tested 2026-03-07)
         groq_base = "https://api.groq.com/openai/v1"
 
-        # Priority 0: Kimi (if available on Groq)
+        # Priority 0: Kimi K2 (Moonshot AI's 1T MoE, 256k context) ✅ TESTED
         self.add_provider(
-            name="groq-kimi",
-            model="kimi",
+            name="groq-kimi-k2",
+            model="moonshotai/kimi-k2-instruct",
             api_key=settings.groq_api_key,
             base_url=groq_base,
             priority=0,
         )
 
-        # Priority 1: Fastest model
+        # Priority 1: Llama 3.1 8B Instant (fastest, ~1000 tokens/sec) ✅ TESTED
         self.add_provider(
             name="groq-8b-instant",
             model="llama-3.1-8b-instant",
@@ -92,31 +93,13 @@ class LLMManager:
             priority=1,
         )
 
-        # Priority 2: Alternative fast model
-        self.add_provider(
-            name="groq-70b-specdec",
-            model="llama-3.1-70b-specdec",
-            api_key=settings.groq_api_key,
-            base_url=groq_base,
-            priority=2,
-        )
-
-        # Priority 3: Versatile large model
-        self.add_provider(
-            name="groq-70b-versatile",
-            model="llama-3.1-70b-versatile",
-            api_key=settings.groq_api_key,
-            base_url=groq_base,
-            priority=3,
-        )
-
-        # Priority 4: Latest large model
+        # Priority 2: Llama 3.3 70B (latest large model, 128k context) ✅ TESTED
         self.add_provider(
             name="groq-3.3-70b",
             model="llama-3.3-70b-versatile",
             api_key=settings.groq_api_key,
             base_url=groq_base,
-            priority=4,
+            priority=2,
         )
 
         # Sort by priority
